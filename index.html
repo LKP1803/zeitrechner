@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lars Cloud-Zeitkonto</title>
+    <title>Lars Cloud-Konto (Geschützt)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -18,34 +18,27 @@
         .user-name { font-size: 0.85em; color: #555; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
         .konto-display { background: #1a1a1a; color: #fff; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 20px; cursor: pointer; border: 1px solid #444; }
         .konto-wert { font-size: 1.8em; font-weight: bold; display: block; line-height: 1.2; }
-        .konto-details { font-size: 0.75em; color: #aaa; margin-top: 8px; }
         .status-switch { display: flex; gap: 5px; margin-bottom: 15px; }
         .status-btn { flex: 1; padding: 10px; border: none; border-radius: 20px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
         .active { background: #1a73e8; color: white; }
         .inactive { background: #eee; color: #555; }
         .row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .col { flex: 1; }
-        label { font-size: 0.75em; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
         input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; text-align: center; font-size: 16px; box-sizing: border-box; }
         .result { margin-top: 15px; padding: 15px; border-radius: 10px; background: #f0f7ff; border-left: 5px solid #1a73e8; min-height: 60px; }
-        .target-box { font-size: 1.25em; color: #1a73e8; font-weight: bold; display: block; }
-        .plus { color: #2ecc71; font-weight: bold; }
-        .minus { color: #e74c3c; font-weight: bold; }
         .btn-save { width: 100%; margin-top: 10px; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-reset { width: 100%; margin-top: 8px; padding: 10px; background: #7f8c8d; color: white; border: none; border-radius: 8px; font-size: 0.85em; cursor: pointer; }
         .footer { font-size: 0.7em; color: #888; text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Lars Cloud-Konto</h2>
+    <h2 id="titel">Lars Cloud-Konto</h2>
     <div class="user-name">Lars Kevin Piesker</div>
 
-    <div class="konto-display" id="kontoBox" onclick="manuellesSaldo()">
-        <small style="color: #888;">Cloud-Kontostand (Live)</small>
+    <div class="konto-display" id="kontoBox" onclick="checkAuthAndRun(manuellesSaldo)">
+        <small style="color: #888;">Cloud-Guthaben (Geschützt)</small>
         <span id="kontoAnzeige" class="konto-wert">--:--</span>
-        <div id="kontoDetails" class="konto-details">Lade Cloud-Daten...</div>
+        <div id="kontoDetails" style="font-size: 0.75em; color: #aaa; margin-top: 8px;">Gesperrt 🔒</div>
     </div>
     
     <div class="status-switch">
@@ -54,24 +47,25 @@
     </div>
 
     <div class="row">
-        <div class="col"><label>Start 1</label><input type="time" id="s1" oninput="berechne()"></div>
-        <div class="col"><label>Ende 1</label><input type="time" id="e1" oninput="berechne()"></div>
+        <div style="flex:1"><label style="font-size:0.7em">Start 1</label><input type="time" id="s1" oninput="berechne()"></div>
+        <div style="flex:1"><label style="font-size:0.7em">Ende 1</label><input type="time" id="e1" oninput="berechne()"></div>
     </div>
     <div class="row">
-        <div class="col"><label>Start 2</label><input type="time" id="s2" oninput="berechne()"></div>
-        <div class="col"><label>Ende 2</label><input type="time" id="e2" oninput="berechne()"></div>
+        <div style="flex:1"><label style="font-size:0.7em">Start 2</label><input type="time" id="s2" oninput="berechne()"></div>
+        <div style="flex:1"><label style="font-size:0.7em">Ende 2</label><input type="time" id="e2" oninput="berechne()"></div>
     </div>
 
-    <div id="ausgabe" class="result">Bitte Startzeit eingeben...</div>
+    <div id="ausgabe" class="result">Bitte anmelden...</div>
     
-    <button class="btn-save" onclick="speichereInCloud()">Tag in Cloud buchen</button>
-    <button class="btn-reset" onclick="resetTag()">Leeren</button>
+    <button class="btn-save" onclick="checkAuthAndRun(speichereInCloud)">Speichern & Synchronisieren</button>
+    <button style="width:100%; margin-top:8px; padding:8px; background:#7f8c8d; color:white; border:none; border-radius:8px; font-size:0.8em;" onclick="logout()">Abmelden / Passwort ändern</button>
 
-    <div class="footer">Soll: <span id="sollText">7:48h</span> | Cloud-Sync aktiv ✅</div>
+    <div class="footer" id="statusSync">🔒 Zugriff gesperrt</div>
 </div>
 
 <script>
-// Firebase Konfiguration von Lars
+// --- KONFIGURATION ---
+const MEIN_PASSWORT = "Lars2026"; // <--- ÄNDERE HIER DEIN PASSWORT!
 const firebaseConfig = {
   apiKey: "AIzaSyDdwUBPREGlUiWR5HepxRZepzQ842WSzm0",
   authDomain: "zeitrechner-lars.firebaseapp.com",
@@ -82,34 +76,55 @@ const firebaseConfig = {
   appId: "1:145270152186:web:9073790de21d6493ade243"
 };
 
-// Firebase initialisieren
+// --- INITIALISIERUNG ---
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
-
 let sollMin = 468;
-let aktuellesTagesSaldo = 0;
 let aktuellerKontostand = 0;
+let tagesSaldo = 0;
+let isAuthenticated = false;
 
-// Daten beim Start aus der Cloud laden
 window.onload = function() {
+    checkLogin();
+};
+
+function checkLogin() {
+    const savedPw = localStorage.getItem('lars_pw');
+    if (savedPw === MEIN_PASSWORT) {
+        unlockApp();
+    } else {
+        const input = prompt("Bitte gib dein Passwort für den Cloud-Zugriff ein:");
+        if (input === MEIN_PASSWORT) {
+            localStorage.setItem('lars_pw', input);
+            unlockApp();
+        } else {
+            alert("Falsches Passwort! Zugriff verweigert.");
+            document.getElementById('ausgabe').innerHTML = "Zugriff gesperrt. Bitte Seite neu laden.";
+        }
+    }
+}
+
+function unlockApp() {
+    isAuthenticated = true;
+    document.getElementById('statusSync').innerHTML = "Cloud-Sync aktiv ✅";
     const kontoRef = database.ref('users/lars/kontostand');
     kontoRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        aktuellerKontostand = data !== null ? data : 0;
+        aktuellerKontostand = snapshot.val() || 0;
         zeigeKonto(aktuellerKontostand);
     });
     berechne();
-};
-
-function setStatus(min) {
-    sollMin = min;
-    document.getElementById('btnAn').className = (min === 468) ? 'status-btn active' : 'status-btn inactive';
-    document.getElementById('btnBe').className = (min === 492) ? 'status-btn active' : 'status-btn inactive';
-    document.getElementById('sollText').innerText = (min === 468) ? '7:48h' : '8:12h';
-    zeigeKonto(aktuellerKontostand);
-    berechne();
 }
 
+function logout() {
+    localStorage.removeItem('lars_pw');
+    location.reload();
+}
+
+function checkAuthAndRun(func) {
+    if (isAuthenticated) { func(); } else { checkLogin(); }
+}
+
+// --- LOGIK ---
 function zeigeKonto(stand) {
     let h = Math.floor(Math.abs(stand) / 60);
     let m = Math.abs(stand) % 60;
@@ -120,12 +135,12 @@ function zeigeKonto(stand) {
     document.getElementById('kontoDetails').innerHTML = `Guthaben: ${stand} Min. | ~ ${tage} Tage`;
 }
 
-function manuellesSaldo() {
-    let eingabe = prompt("Saldo manuell anpassen (Minuten):", aktuellerKontostand);
-    if (eingabe !== null && eingabe !== "") {
-        let neuerStand = parseInt(eingabe);
-        database.ref('users/lars/kontostand').set(neuerStand);
-    }
+function setStatus(min) {
+    sollMin = min;
+    document.getElementById('btnAn').className = (min === 468) ? 'status-btn active' : 'status-btn inactive';
+    document.getElementById('btnBe').className = (min === 492) ? 'status-btn active' : 'status-btn inactive';
+    berechne();
+    if(isAuthenticated) zeigeKonto(aktuellerKontostand);
 }
 
 function tToM(v) { return v ? (parseInt(v.split(':')[0])*60 + parseInt(v.split(':')[1])) : null; }
@@ -137,11 +152,11 @@ function berechne() {
     const s2 = tToM(document.getElementById('s2').value);
     const e2 = tToM(document.getElementById('e2').value);
     const ausgabe = document.getElementById('ausgabe');
-    if (s1 === null) { ausgabe.innerHTML = "Warte auf Startzeit..."; return; }
+    if (s1 === null) { ausgabe.innerHTML = isAuthenticated ? "Warte auf Startzeit..." : "Bitte anmelden..."; return; }
 
     let infoText = "";
     if (!e1) {
-        infoText = `<span class="target-box">Feierabend-Ziel: ${mToT(s1 + sollMin + 30)} Uhr</span>`;
+        infoText = `<span class="target-box">Feierabend: ${mToT(s1 + sollMin + 30)} Uhr</span>`;
     } else if (e1 && s2 && !e2) {
         let restPause = (s2 - e1) >= 30 ? 0 : (30 - (s2 - e1));
         infoText = `<span class="target-box">Neues Ziel: ${mToT(s2 + (sollMin - (e1 - s1)) + restPause)} Uhr</span>`;
@@ -156,28 +171,28 @@ function berechne() {
     }
 
     if (netto > 0 || (e1 && !s2)) {
-        aktuellesTagesSaldo = netto - sollMin;
-        let h = Math.floor(Math.abs(aktuellesTagesSaldo) / 60);
-        let m = Math.abs(aktuellesTagesSaldo) % 60;
-        infoText += `<br>Tagessaldo: <span class="${aktuellesTagesSaldo >= 0 ? 'plus' : 'minus'}">${aktuellesTagesSaldo >= 0 ? '+' : '-'}${h}:${m<10?'0':''}${m}</span>`;
+        tagesSaldo = netto - sollMin;
+        let h = Math.floor(Math.abs(tagesSaldo) / 60);
+        let m = Math.abs(tagesSaldo) % 60;
+        infoText += `<br>Tagessaldo: <span class="${tagesSaldo >= 0 ? 'plus' : 'minus'}">${tagesSaldo >= 0 ? '+' : '-'}${h}:${m<10?'0':''}${m}</span>`;
     }
     ausgabe.innerHTML = infoText;
 }
 
 function speichereInCloud() {
-    if (!document.getElementById('e1').value && !document.getElementById('e2').value) {
-        alert("Bitte Endzeit eintragen!"); return;
-    }
-    let neuerStand = aktuellerKontostand + aktuellesTagesSaldo;
-    database.ref('users/lars/kontostand').set(neuerStand).then(() => {
+    if (!document.getElementById('e1').value && !document.getElementById('e2').value) return;
+    database.ref('users/lars/kontostand').set(aktuellerKontostand + tagesSaldo).then(() => {
         alert("In Cloud gespeichert!");
-        resetTag();
+        document.querySelectorAll('input').forEach(i => i.value = "");
+        tagesSaldo = 0; berechne();
     });
 }
 
-function resetTag() {
-    document.querySelectorAll('input').forEach(i => i.value = "");
-    aktuellesTagesSaldo = 0; berechne();
+function manuellesSaldo() {
+    let eingabe = prompt("Saldo manuell anpassen (Minuten):", aktuellerKontostand);
+    if (eingabe !== null && eingabe !== "") {
+        database.ref('users/lars/kontostand').set(parseInt(eingabe));
+    }
 }
 </script>
 </body>
