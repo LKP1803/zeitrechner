@@ -3,117 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zeit-Rechner Deluxe - Lars Kevin Piesker</title>
+    <title>Zeit-Konto & Ziel - Lars Kevin Piesker</title>
     <style>
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            display: flex; justify-content: center; align-items: center;
+            font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center;
             min-height: 100vh; margin: 0; padding: 15px;
             background: #333 url('hintergrund.jpg') no-repeat center center fixed; background-size: cover;
         }
         body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: -1; }
+        .card { background: rgba(255, 255, 255, 0.96); padding: 20px; border-radius: 20px; width: 100%; max-width: 450px; border-top: 6px solid #1a73e8; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: #1a73e8; margin: 0; text-align: center; }
+        .user-name { font-size: 0.85em; color: #555; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
         
-        .card { 
-            background: rgba(255, 255, 255, 0.96); padding: 20px; border-radius: 20px; 
-            width: 100%; max-width: 450px; border-top: 6px solid #1a73e8; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;
-        }
+        .konto-display { background: #333; color: #fff; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; cursor: pointer; }
+        .konto-wert { font-size: 1.4em; font-weight: bold; }
         
-        h2 { color: #1a73e8; margin: 0 0 5px 0; text-align: center; font-size: 1.5em; }
-        .user-name { font-size: 0.85em; color: #555; text-align: center; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        
-        /* Status-Schalter */
-        .status-switch {
-            display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;
-            background: #eee; padding: 5px; border-radius: 50px;
-        }
-        .status-btn {
-            padding: 8px 15px; border: none; border-radius: 25px; cursor: pointer;
-            font-weight: bold; transition: 0.3s; font-size: 0.9em; flex: 1;
-        }
-        .active-an { background: #1a73e8; color: white; }
-        .active-be { background: #1a73e8; color: white; }
-        .inactive { background: transparent; color: #555; }
+        .status-switch { display: flex; gap: 5px; margin-bottom: 15px; }
+        .status-btn { flex: 1; padding: 8px; border: none; border-radius: 20px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
+        .active { background: #1a73e8; color: white; }
+        .inactive { background: #eee; color: #555; }
 
         .row { display: flex; gap: 10px; margin-bottom: 10px; }
         .col { flex: 1; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85em; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; text-align: center; font-size: 16px; box-sizing: border-box; }
         
-        .result { margin-top: 15px; padding: 15px; border-radius: 10px; background: #f0f7ff; border-left: 5px solid #1a73e8; min-height: 80px; }
-        .target-box { font-size: 1.2em; color: #1a73e8; font-weight: bold; display: block; }
-        
-        .minus { color: #d93025; font-weight: bold; }
+        .result { margin-top: 15px; padding: 15px; border-radius: 10px; background: #f0f7ff; border-left: 5px solid #1a73e8; }
+        .target-box { font-size: 1.2em; color: #1a73e8; font-weight: bold; display: block; margin-bottom: 5px; }
         .plus { color: #188038; font-weight: bold; }
+        .minus { color: #d93025; font-weight: bold; }
         
-        .btn-reset { width: 100%; margin-top: 15px; padding: 12px; background: #d93025; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1em; }
-        .footer { margin-top: 15px; font-size: 0.75em; color: #777; text-align: center; line-height: 1.4; }
+        .btn-save { width: 100%; margin-top: 10px; padding: 12px; background: #188038; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-reset { width: 100%; margin-top: 5px; padding: 8px; background: #666; color: white; border: none; border-radius: 8px; font-size: 0.8em; cursor: pointer; }
+        .footer { font-size: 0.7em; color: #777; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Zeit-Rechner</h2>
+    <h2>Zeit-Konto & Ziel</h2>
     <div class="user-name">Lars Kevin Piesker</div>
+
+    <div class="konto-display" onclick="manuellesSaldo()" title="Klicken zum manuellen Ändern">
+        <small>Gesamt-Kontostand (Klicken zum Ändern)</small><br>
+        <span id="kontoAnzeige" class="konto-wert">00:00</span>
+    </div>
     
     <div class="status-switch">
-        <button id="btnAn" class="status-btn active-an" onclick="setStatus('angestellter')">Angestellte (39h)</button>
-        <button id="btnBe" class="status-btn inactive" onclick="setStatus('beamter')">Beamte (41h)</button>
+        <button id="btnAn" class="status-btn active" onclick="setStatus(468)">Angestellter (39h)</button>
+        <button id="btnBe" class="status-btn inactive" onclick="setStatus(492)">Beamter (41h)</button>
     </div>
 
-    <label>1. Block (Start / Ende)</label>
     <div class="row">
-        <div class="col"><input type="time" id="s1" oninput="berechne()"></div>
-        <div class="col"><input type="time" id="e1" oninput="berechne()"></div>
+        <div class="col"><label><small>Start 1</small></label><input type="time" id="s1" oninput="berechne()"></div>
+        <div class="col"><label><small>Ende 1</small></label><input type="time" id="e1" oninput="berechne()"></div>
     </div>
-
-    <label>2. Block (Start / Ende)</label>
     <div class="row">
-        <div class="col"><input type="time" id="s2" oninput="berechne()"></div>
-        <div class="col"><input type="time" id="e2" oninput="berechne()"></div>
+        <div class="col"><label><small>Start 2</small></label><input type="time" id="s2" oninput="berechne()"></div>
+        <div class="col"><input type="time" id="e2" oninput="berechne()" style="margin-top:20px" placeholder="Ende 2"></div>
     </div>
 
-    <div id="ausgabe" class="result">Zeiten eingeben...</div>
+    <div id="ausgabe" class="result">Startzeit eingeben...</div>
     
-    <button class="btn-reset" onclick="resetForm()">Alles zurücksetzen</button>
-    
-    <div id="footer-info" class="footer">
-        Soll: 7:48h (Angestellter) | Pause: 30 Min<br>
-        Pausenautomatik: Lücke zählt als Pause
-    </div>
+    <button class="btn-save" onclick="speichereInKonto()">Tag abschließen & speichern</button>
+    <button class="btn-reset" onclick="resetTag()">Eingabe leeren</button>
+
+    <div class="footer">Soll: <span id="sollText">7:48h</span> | Alle Daten bleiben im Browser gespeichert</div>
 </div>
 
 <script>
-let aktuellesSoll = 7 * 60 + 48; // Standard Angestellter
+let sollMin = 468;
+let aktuellesTagesSaldo = 0;
+let aktuellerKontostand = 0;
 
-function setStatus(typ) {
-    const btnAn = document.getElementById('btnAn');
-    const btnBe = document.getElementById('btnBe');
-    const footer = document.getElementById('footer-info');
+window.onload = function() {
+    loadKonto();
+    berechne();
+};
 
-    if (typ === 'beamter') {
-        aktuellesSoll = 8 * 60 + 12; // 41h / 5 Tage = 8:12h
-        btnBe.className = 'status-btn active-be';
-        btnAn.className = 'status-btn inactive';
-        footer.innerHTML = "Soll: 8:12h (Beamter) | Pause: 30 Min<br>Pausenautomatik: Lücke zählt als Pause";
-    } else {
-        aktuellesSoll = 7 * 60 + 48; // 39h / 5 Tage = 7:48h
-        btnAn.className = 'status-btn active-an';
-        btnBe.className = 'status-btn inactive';
-        footer.innerHTML = "Soll: 7:48h (Angestellter) | Pause: 30 Min<br>Pausenautomatik: Lücke zählt als Pause";
-    }
+function setStatus(min) {
+    sollMin = min;
+    document.getElementById('btnAn').className = (min === 468) ? 'status-btn active' : 'status-btn inactive';
+    document.getElementById('btnBe').className = (min === 492) ? 'status-btn active' : 'status-btn inactive';
+    document.getElementById('sollText').innerText = (min === 468) ? '7:48h' : '8:12h';
     berechne();
 }
 
-function tToM(val) { return val ? (parseInt(val.split(':')[0]) * 60 + parseInt(val.split(':')[1])) : null; }
+function loadKonto() {
+    let gespeichert = localStorage.getItem('zeitKontoLars');
+    aktuellerKontostand = gespeichert ? parseInt(gespeichert) : 0;
+    zeigeKonto(aktuellerKontostand);
+}
+
+function zeigeKonto(stand) {
+    let h = Math.floor(Math.abs(stand) / 60);
+    let m = Math.abs(stand) % 60;
+    let text = (stand >= 0 ? '+' : '-') + h + ":" + (m < 10 ? '0' : '') + m;
+    document.getElementById('kontoAnzeige').innerText = text;
+    document.getElementById('kontoAnzeige').className = 'konto-wert ' + (stand >= 0 ? 'plus' : 'minus');
+}
+
+function manuellesSaldo() {
+    let eingabe = prompt("Gib dein aktuelles Gesamtsaldo in Minuten ein (z.B. 120 für +2h oder -60 für -1h):", aktuellerKontostand);
+    if (eingabe !== null) {
+        aktuellerKontostand = parseInt(eingabe);
+        localStorage.setItem('zeitKontoLars', aktuellerKontostand);
+        zeigeKonto(aktuellerKontostand);
+    }
+}
+
+function tToM(v) { return v ? (parseInt(v.split(':')[0])*60 + parseInt(v.split(':')[1])) : null; }
 function mToT(m) { 
     m = (m + 1440) % 1440;
     return `${Math.floor(m / 60)}:${(m % 60) < 10 ? '0' : ''}${m % 60}`;
-}
-
-function resetForm() {
-    document.querySelectorAll('input').forEach(i => i.value = "");
-    document.getElementById('ausgabe').innerHTML = "Zeiten eingeben...";
 }
 
 function berechne() {
@@ -123,48 +124,65 @@ function berechne() {
     const e2 = tToM(document.getElementById('e2').value);
     const ausgabe = document.getElementById('ausgabe');
 
-    if (s1 === null) return;
+    if (!s1) { ausgabe.innerHTML = "Warte auf Startzeit..."; return; }
 
-    // 1. Prognose
-    if (e1 === null) {
-        let ziel = mToT(s1 + aktuellesSoll + 30);
-        ausgabe.innerHTML = `<span class="target-box">Ziel: ${ziel} Uhr</span><small>Durcharbeiten (inkl. 30m Pause)</small>`;
+    let infoText = "";
+    
+    // ZIEL-BERECHNUNG (Tagessoll + Ausgleich des Gesamtkontos für "Null" Stand)
+    // Wenn du im Minus bist, musst du länger bleiben, wenn du im Plus bist, kannst du früher gehen.
+    let ausgleich = aktuellerKontostand * -1; 
+    let zielNull = s1 + sollMin + ausgleich + 30; // 30 Min Pause immer dabei
+
+    if (!e1) {
+        infoText = `<span class="target-box">Ziel (für Gesamtkonto 0): ${mToT(zielNull)} Uhr</span><small>Inkl. 30m Pause & Konto-Ausgleich.</small>`;
+    } else if (e1 && s2 && !e2) {
+        let bisher = e1 - s1;
+        let luecke = s2 - e1;
+        let restPause = luecke >= 30 ? 0 : (30 - luecke);
+        let zielNeu = s2 + (sollMin - bisher) + ausgleich + restPause;
+        infoText = `<span class="target-box">Konto-Ziel: ${mToT(zielNeu)} Uhr</span><small>Berechnet mit deinem aktuellen Kontostand.</small>`;
+    }
+
+    // SALDO-BERECHNUNG
+    let netto = 0;
+    if (e1 && !s2) {
+        let d = e1 - s1;
+        netto = d > 390 ? d - 30 : d;
+    } else if (e1 && s2 && e2) {
+        let d = (e1 - s1) + (e2 - s2);
+        let luecke = s2 - e1;
+        let abzug = (d > 390) ? Math.max(0, 30 - luecke) : 0;
+        netto = d - abzug;
+    }
+
+    if (netto > 0 || (e1 && !s2)) {
+        aktuellesTagesSaldo = netto - sollMin;
+        let h = Math.floor(Math.abs(aktuellesTagesSaldo) / 60);
+        let m = Math.abs(aktuellesTagesSaldo) % 60;
+        let klasse = aktuellesTagesSaldo >= 0 ? "plus" : "minus";
+        infoText += `<br>Heutiges Saldo: <span class="${klasse}">${aktuellesTagesSaldo >= 0 ? '+' : '-'}${h}:${m<10?'0':''}${m}</span>`;
+    }
+
+    ausgabe.innerHTML = infoText || "Berechne...";
+}
+
+function speichereInKonto() {
+    if (!document.getElementById('e1').value && !document.getElementById('e2').value) {
+        alert("Bitte erst Arbeitsende eintragen!");
         return;
     }
+    aktuellerKontostand += aktuellesTagesSaldo;
+    localStorage.setItem('zeitKontoLars', aktuellerKontostand);
+    loadKonto();
+    resetTag();
+    alert("Tag wurde im Gesamtkonto verbucht!");
+}
 
-    let dauer1 = e1 - s1;
-    let gearbeitetNetto = 0;
-    let abzug = 0;
-
-    if (s2 !== null) {
-        let luecke = s2 - e1;
-        if (e2 !== null) {
-            let brutto = dauer1 + (e2 - s2);
-            abzug = (brutto > 390) ? Math.max(0, 30 - luecke) : 0;
-            gearbeitetNetto = brutto - abzug;
-        } else {
-            abzug = (luecke >= 30) ? 0 : (30 - luecke);
-            let ziel2 = mToT(s2 + (aktuellesSoll - dauer1) + abzug);
-            ausgabe.innerHTML = `<span class="target-box">Neues Ziel: ${ziel2} Uhr</span><small>Unterbrechung berücksichtigt.</small>`;
-            return;
-        }
-    } else {
-        abzug = (dauer1 > 390) ? 30 : 0;
-        gearbeitetNetto = dauer1 - abzug;
-    }
-
-    let saldo = gearbeitetNetto - aktuellesSoll;
-    let hS = Math.floor(Math.abs(saldo) / 60);
-    let mS = Math.abs(saldo) % 60;
-    let klasse = saldo >= 0 ? "plus" : "minus";
-    
-    ausgabe.innerHTML = 
-        `Netto: ${Math.floor(gearbeitetNetto/60)}h ${gearbeitetNetto%60}m<br>` +
-        `Saldo: <span class="${klasse}">${saldo >= 0 ? '+' : '-'}${hS}:${mS < 10 ? '0' : ''}${mS}</span>` +
-        `<br><small>Pause: ${abzug > 0 ? abzug + ' Min abgezogen' : 'erledigt'}</small>`;
+function resetTag() {
+    document.querySelectorAll('input').forEach(i => i.value = "");
+    aktuellesTagesSaldo = 0;
+    berechne();
 }
 </script>
-
 </body>
 </html>
-
