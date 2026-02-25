@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zeit-Konto & Ziel - Lars Kevin Piesker</title>
+    <title>Zeit-Konto - Lars Kevin Piesker</title>
     <style>
         body { 
             font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center;
@@ -40,7 +40,7 @@
 <body>
 
 <div class="card">
-    <h2>Zeit-Konto & Ziel</h2>
+    <h2>Zeit-Konto</h2>
     <div class="user-name">Lars Kevin Piesker</div>
 
     <div class="konto-display" onclick="manuellesSaldo()" title="Klicken zum manuellen Ändern">
@@ -67,7 +67,7 @@
     <button class="btn-save" onclick="speichereInKonto()">Tag abschließen & speichern</button>
     <button class="btn-reset" onclick="resetTag()">Eingabe leeren</button>
 
-    <div class="footer">Soll: <span id="sollText">7:48h</span> | Alle Daten bleiben im Browser gespeichert</div>
+    <div class="footer">Soll: <span id="sollText">7:48h</span> | Daten bleiben lokal gespeichert</div>
 </div>
 
 <script>
@@ -103,7 +103,7 @@ function zeigeKonto(stand) {
 }
 
 function manuellesSaldo() {
-    let eingabe = prompt("Gib dein aktuelles Gesamtsaldo in Minuten ein (z.B. 120 für +2h oder -60 für -1h):", aktuellerKontostand);
+    let eingabe = prompt("Aktuelles Gesamtsaldo in Minuten (z.B. 60 für 1h Plus):", aktuellerKontostand);
     if (eingabe !== null) {
         aktuellerKontostand = parseInt(eingabe);
         localStorage.setItem('zeitKontoLars', aktuellerKontostand);
@@ -128,19 +128,16 @@ function berechne() {
 
     let infoText = "";
     
-    // ZIEL-BERECHNUNG (Tagessoll + Ausgleich des Gesamtkontos für "Null" Stand)
-    // Wenn du im Minus bist, musst du länger bleiben, wenn du im Plus bist, kannst du früher gehen.
-    let ausgleich = aktuellerKontostand * -1; 
-    let zielNull = s1 + sollMin + ausgleich + 30; // 30 Min Pause immer dabei
-
+    // ZIEL-BERECHNUNG (Rein auf Basis des Tagessolls)
     if (!e1) {
-        infoText = `<span class="target-box">Ziel (für Gesamtkonto 0): ${mToT(zielNull)} Uhr</span><small>Inkl. 30m Pause & Konto-Ausgleich.</small>`;
+        let zielNormal = s1 + sollMin + 30;
+        infoText = `<span class="target-box">Ziel (0:00h heute): ${mToT(zielNormal)} Uhr</span><small>Basierend auf deinem Tagessoll.</small>`;
     } else if (e1 && s2 && !e2) {
         let bisher = e1 - s1;
         let luecke = s2 - e1;
         let restPause = luecke >= 30 ? 0 : (30 - luecke);
-        let zielNeu = s2 + (sollMin - bisher) + ausgleich + restPause;
-        infoText = `<span class="target-box">Konto-Ziel: ${mToT(zielNeu)} Uhr</span><small>Berechnet mit deinem aktuellen Kontostand.</small>`;
+        let zielNeu = s2 + (sollMin - bisher) + restPause;
+        infoText = `<span class="target-box">Ziel heute: ${mToT(zielNeu)} Uhr</span><small>Pause wurde berücksichtigt.</small>`;
     }
 
     // SALDO-BERECHNUNG
@@ -175,7 +172,7 @@ function speichereInKonto() {
     localStorage.setItem('zeitKontoLars', aktuellerKontostand);
     loadKonto();
     resetTag();
-    alert("Tag wurde im Gesamtkonto verbucht!");
+    alert("Tag gespeichert!");
 }
 
 function resetTag() {
