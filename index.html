@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zeit-Konto Pro - Lars Kevin Piesker</title>
+    <title>Lars Cloud-Zeitkonto</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         body { 
             font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center;
@@ -14,28 +16,22 @@
         .card { background: rgba(255, 255, 255, 0.96); padding: 20px; border-radius: 20px; width: 100%; max-width: 450px; border-top: 6px solid #1a73e8; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         h2 { color: #1a73e8; margin: 0; text-align: center; }
         .user-name { font-size: 0.85em; color: #555; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-        
         .konto-display { background: #1a1a1a; color: #fff; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 20px; cursor: pointer; border: 1px solid #444; }
-        .konto-wert { font-size: 1.8em; font-weight: bold; display: block; }
-        .konto-details { font-size: 0.75em; color: #aaa; margin-top: 5px; line-height: 1.4; }
-        .frei-tage { color: #ffd700; font-weight: bold; } /* Gold für die freien Tage */
-        
+        .konto-wert { font-size: 1.8em; font-weight: bold; display: block; line-height: 1.2; }
+        .konto-details { font-size: 0.75em; color: #aaa; margin-top: 8px; }
         .status-switch { display: flex; gap: 5px; margin-bottom: 15px; }
-        .status-btn { flex: 1; padding: 10px; border: none; border-radius: 20px; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: 0.3s; }
-        .active { background: #1a73e8; color: white; box-shadow: 0 4px 10px rgba(26,115,232,0.3); }
+        .status-btn { flex: 1; padding: 10px; border: none; border-radius: 20px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
+        .active { background: #1a73e8; color: white; }
         .inactive { background: #eee; color: #555; }
-
         .row { display: flex; gap: 10px; margin-bottom: 10px; }
         .col { flex: 1; }
-        label { font-size: 0.75em; font-weight: bold; color: #666; margin-left: 5px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; text-align: center; font-size: 16px; box-sizing: border-box; background: #fff; }
-        
-        .result { margin-top: 15px; padding: 15px; border-radius: 10px; background: #f0f7ff; border-left: 5px solid #1a73e8; }
-        .target-box { font-size: 1.25em; color: #1a73e8; font-weight: bold; display: block; margin-bottom: 3px; }
-        .plus { color: #2ecc71; }
-        .minus { color: #e74c3c; }
-        
-        .btn-save { width: 100%; margin-top: 10px; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1em; }
+        label { font-size: 0.75em; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; text-align: center; font-size: 16px; box-sizing: border-box; }
+        .result { margin-top: 15px; padding: 15px; border-radius: 10px; background: #f0f7ff; border-left: 5px solid #1a73e8; min-height: 60px; }
+        .target-box { font-size: 1.25em; color: #1a73e8; font-weight: bold; display: block; }
+        .plus { color: #2ecc71; font-weight: bold; }
+        .minus { color: #e74c3c; font-weight: bold; }
+        .btn-save { width: 100%; margin-top: 10px; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-reset { width: 100%; margin-top: 8px; padding: 10px; background: #7f8c8d; color: white; border: none; border-radius: 8px; font-size: 0.85em; cursor: pointer; }
         .footer { font-size: 0.7em; color: #888; text-align: center; margin-top: 15px; }
     </style>
@@ -43,20 +39,18 @@
 <body>
 
 <div class="card">
-    <h2>Zeit-Konto Pro</h2>
+    <h2>Lars Cloud-Konto</h2>
     <div class="user-name">Lars Kevin Piesker</div>
 
-    <div class="konto-display" onclick="manuellesSaldo()" title="Klicken zum Korrigieren">
-        <small style="color: #888;">Gesamt-Kontostand</small>
-        <span id="kontoAnzeige" class="konto-wert">00:00</span>
-        <div id="kontoDetails" class="konto-details">
-            Lade Daten...
-        </div>
+    <div class="konto-display" id="kontoBox" onclick="manuellesSaldo()">
+        <small style="color: #888;">Cloud-Kontostand (Live)</small>
+        <span id="kontoAnzeige" class="konto-wert">--:--</span>
+        <div id="kontoDetails" class="konto-details">Lade Cloud-Daten...</div>
     </div>
     
     <div class="status-switch">
-        <button id="btnAn" class="status-btn active" onclick="setStatus(468)">Angestellter (39h)</button>
-        <button id="btnBe" class="status-btn inactive" onclick="setStatus(492)">Beamter (41h)</button>
+        <button id="btnAn" class="status-btn active" onclick="setStatus(468)">Angestellter</button>
+        <button id="btnBe" class="status-btn inactive" onclick="setStatus(492)">Beamter</button>
     </div>
 
     <div class="row">
@@ -65,24 +59,45 @@
     </div>
     <div class="row">
         <div class="col"><label>Start 2</label><input type="time" id="s2" oninput="berechne()"></div>
-        <div class="col"><label>&nbsp;</label><input type="time" id="e2" oninput="berechne()" placeholder="Ende 2"></div>
+        <div class="col"><label>Ende 2</label><input type="time" id="e2" oninput="berechne()"></div>
     </div>
 
-    <div id="ausgabe" class="result">Startzeit eingeben...</div>
+    <div id="ausgabe" class="result">Bitte Startzeit eingeben...</div>
     
-    <button class="btn-save" onclick="speichereInKonto()">Tag abschließen & buchen</button>
-    <button class="btn-reset" onclick="resetTag()">Eingabe zurücksetzen</button>
+    <button class="btn-save" onclick="speichereInCloud()">Tag in Cloud buchen</button>
+    <button class="btn-reset" onclick="resetTag()">Leeren</button>
 
-    <div class="footer">Soll-Tag: <span id="sollText">7:48h</span> | <span id="freitagsInfo"></span><br>Daten werden nur lokal im Browser gespeichert.</div>
+    <div class="footer">Soll: <span id="sollText">7:48h</span> | Cloud-Sync aktiv ✅</div>
 </div>
 
 <script>
+// Firebase Konfiguration von Lars
+const firebaseConfig = {
+  apiKey: "AIzaSyDdwUBPREGlUiWR5HepxRZepzQ842WSzm0",
+  authDomain: "zeitrechner-lars.firebaseapp.com",
+  databaseURL: "https://zeitrechner-lars-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "zeitrechner-lars",
+  storageBucket: "zeitrechner-lars.firebasestorage.app",
+  messagingSenderId: "145270152186",
+  appId: "1:145270152186:web:9073790de21d6493ade243"
+};
+
+// Firebase initialisieren
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 let sollMin = 468;
 let aktuellesTagesSaldo = 0;
 let aktuellerKontostand = 0;
 
+// Daten beim Start aus der Cloud laden
 window.onload = function() {
-    loadKonto();
+    const kontoRef = database.ref('users/lars/kontostand');
+    kontoRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        aktuellerKontostand = data !== null ? data : 0;
+        zeigeKonto(aktuellerKontostand);
+    });
     berechne();
 };
 
@@ -95,40 +110,26 @@ function setStatus(min) {
     berechne();
 }
 
-function loadKonto() {
-    let gespeichert = localStorage.getItem('zeitKontoLars');
-    aktuellerKontostand = gespeichert ? parseInt(gespeichert) : 0;
-    zeigeKonto(aktuellerKontostand);
-}
-
 function zeigeKonto(stand) {
     let h = Math.floor(Math.abs(stand) / 60);
     let m = Math.abs(stand) % 60;
     let text = (stand >= 0 ? '+' : '-') + h + ":" + (m < 10 ? '0' : '') + m;
-    
     document.getElementById('kontoAnzeige').innerText = text;
     document.getElementById('kontoAnzeige').className = 'konto-wert ' + (stand >= 0 ? 'plus' : 'minus');
-    
-    // Zusatz-Details (Minuten und freie Tage)
     let tage = (Math.abs(stand) / sollMin).toFixed(2);
-    let detailText = `Gesamt: ${stand} Min. | Entspricht <span class="frei-tage">${tage}</span> Arbeitstagen`;
-    document.getElementById('kontoDetails').innerHTML = detailText;
+    document.getElementById('kontoDetails').innerHTML = `Guthaben: ${stand} Min. | ~ ${tage} Tage`;
 }
 
 function manuellesSaldo() {
-    let eingabe = prompt("Aktuelles Gesamtsaldo manuell anpassen (in Minuten):", aktuellerKontostand);
-    if (eingabe !== null && !isNaN(eingabe)) {
-        aktuellerKontostand = parseInt(eingabe);
-        localStorage.setItem('zeitKontoLars', aktuellerKontostand);
-        zeigeKonto(aktuellerKontostand);
+    let eingabe = prompt("Saldo manuell anpassen (Minuten):", aktuellerKontostand);
+    if (eingabe !== null && eingabe !== "") {
+        let neuerStand = parseInt(eingabe);
+        database.ref('users/lars/kontostand').set(neuerStand);
     }
 }
 
 function tToM(v) { return v ? (parseInt(v.split(':')[0])*60 + parseInt(v.split(':')[1])) : null; }
-function mToT(m) { 
-    m = (m + 1440) % 1440;
-    return `${Math.floor(m / 60)}:${(m % 60) < 10 ? '0' : ''}${m % 60}`;
-}
+function mToT(m) { m = (m + 1440) % 1440; return `${Math.floor(m / 60)}:${(m % 60) < 10 ? '0' : ''}${m % 60}`; }
 
 function berechne() {
     const s1 = tToM(document.getElementById('s1').value);
@@ -136,62 +137,47 @@ function berechne() {
     const s2 = tToM(document.getElementById('s2').value);
     const e2 = tToM(document.getElementById('e2').value);
     const ausgabe = document.getElementById('ausgabe');
-
-    if (!s1) { ausgabe.innerHTML = "Warten auf Startzeit..."; return; }
+    if (s1 === null) { ausgabe.innerHTML = "Warte auf Startzeit..."; return; }
 
     let infoText = "";
-    
-    // ZIEL-BERECHNUNG
     if (!e1) {
-        let zielNormal = s1 + sollMin + 30;
-        infoText = `<span class="target-box">Feierabend (0:00h): ${mToT(zielNormal)} Uhr</span><small>Inklusive 30 Min. Pause.</small>`;
+        infoText = `<span class="target-box">Feierabend-Ziel: ${mToT(s1 + sollMin + 30)} Uhr</span>`;
     } else if (e1 && s2 && !e2) {
-        let bisher = e1 - s1;
-        let luecke = s2 - e1;
-        let restPause = luecke >= 30 ? 0 : (30 - luecke);
-        let zielNeu = s2 + (sollMin - bisher) + restPause;
-        infoText = `<span class="target-box">Feierabend: ${mToT(zielNeu)} Uhr</span><small>Pause wurde eingerechnet.</small>`;
+        let restPause = (s2 - e1) >= 30 ? 0 : (30 - (s2 - e1));
+        infoText = `<span class="target-box">Neues Ziel: ${mToT(s2 + (sollMin - (e1 - s1)) + restPause)} Uhr</span>`;
     }
 
-    // SALDO-BERECHNUNG
     let netto = 0;
     if (e1 && !s2) {
-        let d = e1 - s1;
-        netto = d > 390 ? d - 30 : d;
+        netto = (e1 - s1) > 390 ? (e1 - s1) - 30 : (e1 - s1);
     } else if (e1 && s2 && e2) {
         let d = (e1 - s1) + (e2 - s2);
-        let luecke = s2 - e1;
-        let abzug = (d > 390) ? Math.max(0, 30 - luecke) : 0;
-        netto = d - abzug;
+        netto = d - (d > 390 ? Math.max(0, 30 - (s2 - e1)) : 0);
     }
 
     if (netto > 0 || (e1 && !s2)) {
         aktuellesTagesSaldo = netto - sollMin;
         let h = Math.floor(Math.abs(aktuellesTagesSaldo) / 60);
         let m = Math.abs(aktuellesTagesSaldo) % 60;
-        let klasse = aktuellesTagesSaldo >= 0 ? "plus" : "minus";
-        infoText += `<br>Tagessaldo heute: <span class="${klasse}">${aktuellesTagesSaldo >= 0 ? '+' : '-'}${h}:${m<10?'0':''}${m}</span>`;
+        infoText += `<br>Tagessaldo: <span class="${aktuellesTagesSaldo >= 0 ? 'plus' : 'minus'}">${aktuellesTagesSaldo >= 0 ? '+' : '-'}${h}:${m<10?'0':''}${m}</span>`;
     }
-
-    ausgabe.innerHTML = infoText || "Berechne...";
+    ausgabe.innerHTML = infoText;
 }
 
-function speichereInKonto() {
+function speichereInCloud() {
     if (!document.getElementById('e1').value && !document.getElementById('e2').value) {
-        alert("Fehler: Bitte erst eine Endzeit eintragen!");
-        return;
+        alert("Bitte Endzeit eintragen!"); return;
     }
-    aktuellerKontostand += aktuellesTagesSaldo;
-    localStorage.setItem('zeitKontoLars', aktuellerKontostand);
-    loadKonto();
-    resetTag();
-    alert("Buchung erfolgreich! Dein Zeitkonto wurde aktualisiert.");
+    let neuerStand = aktuellerKontostand + aktuellesTagesSaldo;
+    database.ref('users/lars/kontostand').set(neuerStand).then(() => {
+        alert("In Cloud gespeichert!");
+        resetTag();
+    });
 }
 
 function resetTag() {
     document.querySelectorAll('input').forEach(i => i.value = "");
-    aktuellesTagesSaldo = 0;
-    berechne();
+    aktuellesTagesSaldo = 0; berechne();
 }
 </script>
 </body>
