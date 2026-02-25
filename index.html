@@ -185,4 +185,14 @@ function speichereInKonto() {
     localStorage.setItem('zeitKontoLars', aktuellerKontostand);
     loadKonto();
     resetTag();
-    alert("Buchung erfolgreich! Dein
+    alert("Buchung erfolgreich! Dein Zeitkonto wurde aktualisiert.");
+}
+
+function resetTag() {
+    document.querySelectorAll('input').forEach(i => i.value = "");
+    aktuellesTagesSaldo = 0;
+    berechne();
+}
+</script>
+</body>
+</html>
